@@ -7,6 +7,26 @@
 
 ---
 
+> **STATUS (updated 13 Nov 2026): partly superseded.** This blueprint was written before the official question paper ([final_FastRobox_1.md](final_FastRobox_1.md)). Where the two disagree, **the paper wins**. Hardware pins and the verification status live in [FastRobox_Pin_Connections.md](FastRobox_Pin_Connections.md). Use the stack, UI design and prompt structure below, but apply the overrides in section 0 to every prompt.
+
+## 0. Overrides from the Official Question Paper (apply to every prompt below)
+
+| Topic | This blueprint originally said | Paper requirement (use this) |
+| :--- | :--- | :--- |
+| Camera | OV2640 | **OV3660** on an ESP32-S3 N16R8 board (OPI PSRAM: avoid GPIO35–37) |
+| Pins | Pick "safe" GPIOs | Use the table in `FastRobox_Pin_Connections.md`; camera pins are UNVERIFIED until tested |
+| Device auth | Supabase anon key stored on the device, permissive RLS | Per-device **token** entered on the setup page; server checks roles on every request; no keys or tokens in code or repo |
+| Telemetry format | Custom columns | Fixed JSON (paper section 6): `device_id, room_id, seq, ts, uptime_s, temp_c, rh, heat_index_c, flame, door, status, heat_trend, rssi, heap_kb, chip_temp_c, fw, quality`. `(device_id, seq)` is **unique**; replays are rejected; `seq` never reused across restarts; `ts` is the reading time (NTP, UTC) |
+| Events | Custom event types | Device and server event names from paper section 6 (`BOOT, STATUS, FIRE, FIRE_CLEARED, SILENCED, PANIC, CARD_TAP, ENTRY_GRANTED, ENTRY_DENIED, NO_FACE, OFFLINE_ENTRY, ...`); each is also printed as `[EVENT] <type> <detail>` |
+| Serial output | `[FASTROBOX][L01]...` line | Tags `[STATUS] [CARD] [EVENT] [ERROR] [NET] [OTA] [CAM] [BLE] [CMD]`; one fixed-format `[STATUS]` line every second; commands `help status health tasks ver hang reset csi` |
+| Light and buzzer | Red = locked, green = unlocked | The 11-state priority table (paper section 4): Fire > Panic > Access granted > Access denied > Heat Danger > Sensor error > Camera fault > Weather > Warning > Wi-Fi setup/offline > Safe; heartbeat is 2 Hz |
+| Setup mode | AP `FastRobox-Setup-AP`, 8 s timeout, BOOT 3 s | AP `SmartClass-<TeamID>` with an **8-character password printed on Serial**, page at `192.168.4.1`, back to setup within **15 s** on a wrong password, BOOT held **5 s** or `reset` clears settings; status page also at `http://smartclass-<teamid>.local` (mDNS), files in LittleFS |
+| Door | Manual lock/unlock buttons, key tag toggles the door | Door is simulated; the **Teacher tag only silences the alarm after the flame has gone**; fire latch (saved in flash) keeps the door UNLOCKED until Teacher/Admin sends Reset fire; no control may override fire |
+| Heat limits | One threshold, 35 °C | Warning 32 °C or 85% RH, Danger 40 °C, leave 2 °C below (Warning also needs RH at 80% or below), 3 s hold; flame 2 s = FIRE at once; touch panic 2 s |
+| Offline buffer | 50 events | At least **30 minutes** of telemetry in flash, sent oldest first once each with the original time; half-written records discarded |
+| Missing features | Not planned | Task watchdog (10 s), dual-core FreeRTOS tasks, OTA with rollback (60 s rule), BLE name `SC-<TeamID>-<STATE>`, Wi-Fi CSI, weather and notices, AI assistant limited to stored data, Bangla/English switch, four roles with bcrypt, 5-wrong-password lockout for 30 s, card lockout, face deletion |
+| Judging calls | Fixed 3-level groups with the wrong contents | Up to **four calls**, each a run of consecutive levels starting at the next unpassed level; see section 4 |
+
 ## 1. Competition-Specific Architecture & Rule Compliance Matrix
 
 Before running the build prompts below, ensure every architectural decision adheres to the non-negotiable constraints from the official rulebook:
@@ -216,7 +236,7 @@ You are a Full-Stack Developer optimizing a hackathon dashboard for live judging
 You are an Embedded Systems Engineer specializing in the ESP32-S3-CAM. Create the complete single-header HTML/CSS/JS string (`local_status_page.h`) to be served directly from the ESP32-S3's internal web server, plus the exact Breadboard-Free GPIO Pinout Matrix.
 
 ### 1. Breadboard-Free Safe GPIO Mapping for ESP32-S3-CAM:
-Assign safe pins that do NOT conflict with the OV2640 Camera, PSRAM, or USB Serial (`GPIO 19/20` or `U0TXD/U0RXD`):
+Use the verified-status table in `FastRobox_Pin_Connections.md`. Pins must not conflict with the OV3660 camera, the octal PSRAM (GPIO35–37), the native USB (GPIO19/20) or UART0 (GPIO43/44):
 - **RC522 RFID (SPI):** `SDA/SS`, `SCK`, `MOSI`, `MISO`, `RST`
 - **DHT11 Sensor:** 1 digital GPIO pin
 - **IR Flame Sensor (3-pin DO):** 1 digital input GPIO pin
@@ -246,8 +266,8 @@ You are a Senior Embedded IoT Firmware Architect. Write the complete, modular, n
 
 ### Mandatory Functional & Rulebook Requirements:
 1. **Zero Hard-Coded Values / Zero Secrets in Code:**
-   - Load `wifi_ssid`, `wifi_pass`, `api_url`, `api_key`, `room_id`, and `class_start_time` from `Preferences` (NVS namespace `"fastrobox"`).
-   - If Wi-Fi fails to connect within 8 seconds or the `BOOT` button (`GPIO 0`) is held for 3 seconds, automatically start a fallback Wi-Fi Access Point (`FastRobox-Setup-AP`) serving the `Local Status Page` so judges can enter new Wi-Fi credentials on the spot.
+   - Load `wifi_ssid`, `wifi_pass`, `api_url`, `device_token`, `room_id`, and `class_start_time` from `Preferences` (NVS namespace `"fastrobox"`). The device uses a per-device token, never a database key.
+   - If Wi-Fi fails (wrong password or unreachable network: back in setup within 15 seconds) or the `BOOT` button (`GPIO 0`) is held for 5 seconds, start the Access Point `SmartClass-<TeamID>` with an 8-character password printed on Serial, serving the setup page at `192.168.4.1` so judges can enter Wi-Fi, Room ID and device token on the spot.
 2. **Non-Blocking Loop & Stopwatch-Grade Responsiveness (<500ms):**
    - Never use `delay()` in the main loop. Use `millis()` timers or FreeRTOS tasks so Flame Detection, Touch Panic Pad, and RFID scans trigger the Active Buzzer, Onboard RGB LED, Serial Monitor, and Cloud Sync immediately.
 3. **Peripheral Logic:**
@@ -255,7 +275,7 @@ You are a Senior Embedded IoT Firmware Architect. Write the complete, modular, n
    - **RC522 RFID Reader:** Distinguishes between the **White Card (Student Check-In)** and **Blue Key-Tag (Teacher Action / Door Unlock Toggle)**. Triggers a short feedback beep on the Active Buzzer, captures a camera frame if Vision mode is enabled, and logs attendance.
    - **Simulated Door State:** Stored in NVS (`door_locked` boolean) so if power is unplugged and plugged back in, the door remembers its exact `LOCKED`/`UNLOCKED` state (Section 1 power-loss resilience) and sets the onboard RGB LED accordingly (`RED` = Locked, `GREEN` = Unlocked).
 4. **Offline Queue & Auto-Resync (Network Resilience):**
-   - If Wi-Fi or the internet drops, store up to 50 attendance/security events in a circular ring buffer in LittleFS/NVS. As soon as connectivity returns, flush all buffered events to `/api/esp32/sync` with `"is_offline_synced": true`.
+   - If Wi-Fi or the internet drops, store at least 30 minutes of telemetry plus all events in flash (LittleFS), oldest first, each record once with its original time. As soon as connectivity returns, flush all buffered events to `/api/esp32/sync` with `"is_offline_synced": true`.
 5. **Structured Serial Monitor Output (1st Display Surface):**
    - Print clean, human-readable, single-line logs every time a state changes or a sensor updates, formatted for judge inspection:
      `[FASTROBOX][L01][ROOM:BUBT-101] DOOR:UNLOCKED | TEMP:28.4C | HUM:62% | RSSI:-55dBm | FLAME:SAFE | PANIC:IDLE | QUEUE:0`
@@ -275,8 +295,9 @@ You are a Senior Embedded IoT Firmware Architect. Write the complete, modular, n
    - **Bottom-Left:** ESP32 `Local Status Page` (`http://192.168.x.x`).
    - **Top-Right:** Public `HTTPS` Next.js Web Dashboard (with the on-screen stopwatch active).
    - **Bottom-Right:** Supabase Table Editor (`Database records` surface).
-3. **4 Judging Calls Strategy (Rule 2.1):**
-   - **Call 1:** Levels 1, 2, 3 (Core setup, dynamic config, basic sensors/door).
-   - **Call 2:** Levels 4, 5, 6 (RFID attendance, safety alerts, web sync).
-   - **Call 3:** Levels 7, 8, 9 (Vision/face recognition, searchable history, remote config).
-   - **Call 4:** Levels 10, 11, 12 (Offline resilience, power-loss recovery, OTA firmware update).
+3. **4 Judging Calls Strategy (Rule 2.1):** levels are passed in strict order, and each call names consecutive levels starting at the next unpassed one. A suggested split that matches the paper:
+   - **Call 1:** Levels 1–3 (tasks and watchdog, Wi-Fi setup and telemetry, heat/fire/panic and fail-safe door).
+   - **Call 2:** Levels 4–6 (secure platform and roles, remote settings and OTA, weather/history/AI assistant).
+   - **Call 3:** Levels 7–9 (card and face check-in, spoofing and deletion, occupancy and tamper).
+   - **Call 4:** Levels 10–12 (hand-raise model, Wi-Fi CSI, offline/BLE/power-cut recovery).
+   - A failed level can be retried (2nd attempt, 70% marks) at once or in a later call; keep one call spare for retries if possible.
