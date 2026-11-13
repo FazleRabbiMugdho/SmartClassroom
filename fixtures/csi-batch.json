@@ -1,0 +1,40 @@
+{
+  "device_id": "T07-D1",
+  "room_id": "ROOM-101",
+  "packets_per_s": 24,
+  "packets_lost": 0,
+  "subcarriers": 52,
+  "wifi_channel": 6,
+  "dataset_version": "csi-ds-1",
+  "camera_covered": true,
+  "samples": [
+    {
+      "ts": 1794567901,
+      "seq": 5001,
+      "features": [
+        0.12,
+        -0.44,
+        0.9,
+        0.03
+      ],
+      "label": "ZONE_1"
+    },
+    {
+      "ts": 1794567901,
+      "seq": 5002,
+      "features": [
+        0.11,
+        -0.41,
+        0.88,
+        0.05
+      ],
+      "label": "ZONE_1"
+    }
+  ],
+  "prediction": {
+    "zone": "ZONE_1",
+    "confidence": 0.87,
+    "model_version": "csi-loc-1"
+  },
+  "synthetic": true
+}

@@ -1,0 +1,17 @@
+{
+  "device_id": "T07-D1",
+  "ts": 1794567895,
+  "chip_temp_c": 41.5,
+  "free_heap_kb": 182,
+  "free_psram_kb": 3900,
+  "flash_size_kb": 16384,
+  "cpu_freq_mhz": 240,
+  "rssi": -61,
+  "uptime_s": 742,
+  "reset_reason": "POWER_ON",
+  "fw": "1.0.0",
+  "tasks": [
+    { "name": "telemetry", "core": 0, "free_stack": 2048 },
+    { "name": "camera", "core": 1, "free_stack": 4096 }
+  ]
+}

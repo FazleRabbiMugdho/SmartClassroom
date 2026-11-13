@@ -1,0 +1,6 @@
+{
+  "config_revision": 1,
+  "warning_temp_c": 32,
+  "danger_temp_c": 40,
+  "telemetry_interval_s": 5
+}

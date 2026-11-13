@@ -1,0 +1,34 @@
+{
+  "device_id": "T07-D1",
+  "records": [
+    {
+      "kind": "telemetry",
+      "device_id": "T07-D1",
+      "room_id": "ROOM-101",
+      "seq": 2002,
+      "ts": 1794568000,
+      "uptime_s": 820,
+      "temp_c": 30.1,
+      "rh": 66,
+      "heat_index_c": 32.4,
+      "flame": false,
+      "door": "LOCKED",
+      "status": "WARNING",
+      "heat_trend": "RISING",
+      "rssi": -63,
+      "heap_kb": 180,
+      "chip_temp_c": 42.1,
+      "fw": "1.0.0",
+      "quality": "good"
+    },
+    {
+      "kind": "event",
+      "device_id": "T07-D1",
+      "room_id": "ROOM-101",
+      "seq": 2001,
+      "ts": 1794567990,
+      "type": "CARD_TAP",
+      "detail": { "uid": "04A1B2C3", "source": "RC522" }
+    }
+  ]
+}

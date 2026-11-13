@@ -1,0 +1,19 @@
+{
+  "device_id": "T07-D1",
+  "room_id": "ROOM-101",
+  "seq": 1048,
+  "ts": 1794567890,
+  "uptime_s": 742,
+  "temp_c": 29.0,
+  "rh": 64,
+  "heat_index_c": 31.2,
+  "flame": false,
+  "door": "LOCKED",
+  "status": "SAFE",
+  "heat_trend": "STABLE",
+  "rssi": -61,
+  "heap_kb": 182,
+  "chip_temp_c": 41.5,
+  "fw": "1.0.0",
+  "quality": "good"
+}
