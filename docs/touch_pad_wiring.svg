@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="420" viewBox="0 0 860 420" font-family="Arial, sans-serif">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <text x="20" y="30" font-size="18" font-weight="bold">Touch panic pad — wiring (illustrative, not a photo)</text>
+  <text x="20" y="50" font-size="12" fill="#b00020">UNVERIFIED: not tested on hardware. GPIO1 is a touch-capable pin on ESP32-S3.</text>
+
+  <!-- ESP32 header -->
+  <rect x="60" y="90" width="200" height="260" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+  <text x="75" y="115" font-size="13" font-weight="bold">ESP32-S3-WROOM CAM</text>
+  <circle cx="260" cy="200" r="5" fill="#4f46e5"/>
+  <text x="240" y="205" text-anchor="end" font-size="13" font-weight="bold">GPIO1 (label "1")</text>
+
+  <!-- jumper: female end on pin, bare metal tip -->
+  <path d="M260 200 C 380 200, 420 260, 520 260" fill="none" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="260" cy="200" r="9" fill="none" stroke="#f59e0b" stroke-width="3"/>
+  <text x="330" y="235" font-size="12" fill="#92400e">cut jumper (female end removed)</text>
+
+  <!-- bare metal tip (open end) -->
+  <line x1="520" y1="260" x2="590" y2="260" stroke="#9ca3af" stroke-width="3"/>
+  <circle cx="600" cy="260" r="6" fill="#c0c0c0" stroke="#475569" stroke-width="2"/>
+  <rect x="588" y="262" width="26" height="8" fill="#c0c0c0" stroke="#475569"/>
+  <text x="620" y="265" font-size="13" font-weight="bold">Bare metal tip</text>
+  <text x="620" y="283" font-size="12" fill="#444">left open, not connected</text>
+  <text x="620" y="300" font-size="12" fill="#444">touching it is the panic input</text>
+
+  <!-- notes -->
+  <text x="60" y="380" font-size="12" fill="#444">Steps: 1) cut one female-female jumper in the middle.  2) strip ~1 cm of the cut end.</text>
+  <text x="60" y="398" font-size="12" fill="#444">3) connect the female end to GPIO1 on the header.  4) leave the bare tip open.</text>
+</svg>

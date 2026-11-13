@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+npm-debug.log*
+
+# PlatformIO & build artifacts
+.pio/
+compile_commands.json
+*.exe
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

@@ -1,0 +1,6 @@
+[wokwi]
+version = 1
+# Firmware is built by PlatformIO in ../firmware (env "esp32s3"): run `pio run -e esp32s3` there first.
+# Paths are relative to this file.
+firmware = '../firmware/.pio/build/esp32s3/firmware.bin'
+elf = '../firmware/.pio/build/esp32s3/firmware.elf'
