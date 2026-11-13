@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "author": "FastRobox team",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "id": "esp",
+      "type": "board-esp32-s3-devkitc-1",
+      "top": 0,
+      "left": 0,
+      "attrs": {
+        "flashSize": "16",
+        "psramSize": "8",
+        "psramType": "octal"
+      }
+    },
+    {
+      "id": "rfid1",
+      "type": "board-mfrc522",
+      "top": -40,
+      "left": 560,
+      "attrs": {}
+    },
+    {
+      "id": "dht1",
+      "type": "wokwi-dht22",
+      "top": 190,
+      "left": 560,
+      "attrs": {}
+    },
+    {
+      "id": "btnFlame",
+      "type": "wokwi-pushbutton",
+      "top": 340,
+      "left": 560,
+      "attrs": {
+        "color": "orange",
+        "label": "FLAME DO (stand-in)"
+      }
+    },
+    {
+      "id": "bz1",
+      "type": "wokwi-buzzer",
+      "top": 490,
+      "left": 560,
+      "attrs": {
+        "volume": "0.5"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "rfid1:SDA",
+      "esp:42",
+      "purple",
+      [
+        "h-200",
+        "*",
+        "h260"
+      ]
+    ],
+    [
+      "rfid1:SCK",
+      "esp:41",
+      "orange",
+      [
+        "h-240",
+        "*",
+        "h220"
+      ]
+    ],
+    [
+      "rfid1:MOSI",
+      "esp:47",
+      "blue",
+      [
+        "h-160",
+        "*",
+        "h300"
+      ]
+    ],
+    [
+      "rfid1:MISO",
+      "esp:21",
+      "green",
+      [
+        "h-120",
+        "*",
+        "h340"
+      ]
+    ],
+    [
+      "rfid1:RST",
+      "esp:38",
+      "gray",
+      [
+        "h-280",
+        "*",
+        "h180"
+      ]
+    ],
+    [
+      "dht1:SDA",
+      "esp:39",
+      "yellow",
+      [
+        "h-320",
+        "*",
+        "h140"
+      ]
+    ],
+    [
+      "btnFlame:1.l",
+      "esp:40",
+      "brown",
+      [
+        "h-360",
+        "*",
+        "h100"
+      ]
+    ],
+    [
+      "bz1:2",
+      "esp:2",
+      "cyan",
+      [
+        "h-400",
+        "*",
+        "h60"
+      ]
+    ],
+    [
+      "rfid1:3.3V",
+      "esp:3V3.1",
+      "red",
+      [
+        "h-60",
+        "v-90",
+        "h-520",
+        "*"
+      ]
+    ],
+    [
+      "dht1:VCC",
+      "esp:3V3.1",
+      "red",
+      [
+        "h-40",
+        "v-310",
+        "h-540",
+        "*"
+      ]
+    ],
+    [
+      "rfid1:GND",
+      "esp:GND.1",
+      "black",
+      [
+        "h-80",
+        "*",
+        "h380"
+      ]
+    ],
+    [
+      "dht1:GND",
+      "esp:GND.1",
+      "black",
+      [
+        "h-60",
+        "v-210",
+        "h-380",
+        "*"
+      ]
+    ],
+    [
+      "btnFlame:2.l",
+      "esp:GND.1",
+      "black",
+      [
+        "h-80",
+        "v-330",
+        "h-360",
+        "*"
+      ]
+    ],
+    [
+      "bz1:1",
+      "esp:GND.1",
+      "black",
+      [
+        "h-100",
+        "v-500",
+        "h-340",
+        "*"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}

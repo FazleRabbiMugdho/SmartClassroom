@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "fastrobox") (type "KiCad") (uri "${KIPRJMOD}/fastrobox.kicad_sym") (options "") (descr "FastRobox custom parts"))
+)

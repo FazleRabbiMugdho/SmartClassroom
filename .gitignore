@@ -1,4 +1,6 @@
+# Node / Next.js
 node_modules/
+npm-debug.log*
 .next/
 out/
 build/
@@ -6,6 +8,22 @@ build/
 .env.local
 *.tsbuildinfo
 next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+
+# PlatformIO & build artifacts
+.pio/
+compile_commands.json
+*.exe
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
 
 # local tooling
 .impeccable/

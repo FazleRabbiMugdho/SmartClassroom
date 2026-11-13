@@ -1,0 +1,12 @@
+{
+  "name": "fastrobox-platform",
+  "version": "0.2.0",
+  "description": "FastRobox 1.0 platform. Level 2: secure ingest, replay rejection, online/offline, records view.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node --experimental-sqlite server.mjs",
+    "test": "node --experimental-sqlite test/smoke.mjs"
+  }
+}
