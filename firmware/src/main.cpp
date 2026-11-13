@@ -16,11 +16,9 @@
 #include "levels/level02.h"
 #include "levels/level03.h"
 
-// Levels built so far, in the order the paper requires (each depends only on the ones before it).
+// Level 1: Dual-Core Tasks, Health and Watchdog
 static const LevelModule *const ENABLED_LEVELS[] = {
     &LEVEL_01,
-    &LEVEL_02,
-    &LEVEL_03,
 };
 
 void setup() {
