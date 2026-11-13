@@ -60,7 +60,9 @@ static String jsonEscape(const char *s) {
 // One HTTPS request to the platform. Returns the HTTP status, or 0 when it could not be sent.
 static int httpsRequest(const char *method, const char *path, const String &body, String *response) {
   if (!g_l2.server[0] || !g_l2.token[0]) return 0;
-  String url = String(g_l2.server) + path;
+  String base = g_l2.server;                       // a trailing "/" would make "//api/..." and give 404
+  while (base.endsWith("/")) base.remove(base.length() - 1);
+  String url = base + path;
   if (!url.startsWith("https://")) {
     Serial.println("[ERROR] server URL must start with https://");
     return 0;

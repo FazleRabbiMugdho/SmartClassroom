@@ -73,8 +73,34 @@ static void enterSetup(const String &error) {
   Serial.printf("[NET] SETUP MODE%s%s\n", error.length() ? " error: " : "", error.c_str());
 }
 
+// Prints the exact reason the Wi-Fi link dropped, so a failed join is easy to diagnose.
+// Common codes: 15 or 204 = wrong password (handshake), 201 = network not found, 202 = auth failed.
+static const char *disconnectName(uint8_t r) {
+  switch (r) {
+    case 2: return "AUTH_EXPIRE";
+    case 4: return "ASSOC_EXPIRE";
+    case 15: return "4WAY_HANDSHAKE_TIMEOUT (usually wrong password)";
+    case 201: return "NO_AP_FOUND (network not seen, or not 2.4 GHz)";
+    case 202: return "AUTH_FAIL (wrong password)";
+    case 203: return "ASSOC_FAIL";
+    case 204: return "HANDSHAKE_TIMEOUT (usually wrong password)";
+    case 205: return "CONNECTION_FAIL";
+    default: return "other";
+  }
+}
+
+static void onWifiEvent(arduino_event_id_t event, arduino_event_info_t info) {
+  if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    uint8_t r = info.wifi_sta_disconnected.reason;
+    Serial.printf("[NET] disconnect reason=%u (%s)\n", r, disconnectName(r));
+  }
+}
+
+static bool g_wifi_event_added = false;
+
 static void startConnect() {
-  Serial.printf("[NET] connecting to \"%s\"\n", g_l2.ssid);
+  Serial.printf("[NET] connecting to \"%s\" (password length %u)\n", g_l2.ssid, (unsigned)strlen(g_l2.pass));
+  if (!g_wifi_event_added) { WiFi.onEvent(onWifiEvent); g_wifi_event_added = true; }
   WiFi.mode(g_ap_up ? WIFI_AP_STA : WIFI_STA);
   WiFi.setAutoReconnect(false);          // this manager owns the retry gaps
   WiFi.begin(g_l2.ssid, g_l2.pass);
@@ -138,6 +164,10 @@ static void netTask(void *) {
       g_l2.verified = false;
       g_setup_error = "";
       startConnect();
+      // startConnect() stamps g_attempt_start AFTER "now" was read. Without this refresh,
+      // now - g_attempt_start wraps to a huge number and the attempt "times out" at once
+      // (every Save from the setup page failed with status=6 within a second).
+      now = millis();
     }
 
     switch (g_ns) {
@@ -168,10 +198,9 @@ static void netTask(void *) {
           g_retry_at = now + RETRY_GAPS_MS[0];
           g_retry_idx = 1;
           g_ns = NS_WAIT_RETRY;
-        } else if (now - last_rssi >= 1000) {
-          last_rssi = now;
-          STATE_LOCK(); g_state.rssi = WiFi.RSSI(); g_state.rssi_valid = true; STATE_UNLOCK();
         }
+        // Signal strength (WiFi.RSSI) is NOT read here: on this board the call stalled the Wi-Fi stack and
+        // caused an interrupt watchdog reset (decoded backtrace: netTask -> WiFi.RSSI). The page shows "-" for now.
         break;
       case NS_WAIT_RETRY:
         if ((int32_t)(now - g_retry_at) >= 0) {
