@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartClass local status</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f6fb;color:#0f172a;margin:0;padding:16px}
+  h1{font-size:20px;margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
+  .k{font-size:12px;color:#475569}
+  .v{font-size:20px;font-weight:bold;font-variant-numeric:tabular-nums;margin-top:4px}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:14px}
+  .LIVE{background:#d1fae5;color:#065f46}.OFFLINE,.CONNECTING,.SETUP{background:#fee2e2;color:#991b1b}
+  #err{color:#b00020;margin-top:10px}
+  #alert{display:none;background:#dc2626;color:#fff;font-size:26px;font-weight:bold;padding:14px;border-radius:12px;margin-bottom:12px;text-align:center}
+  #notice{display:none;background:#fef3c7;color:#92400e;padding:10px;border-radius:10px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<h1>SmartClass local status <span id="conn" class="pill">...</span></h1>
+<div id="alert"></div>
+<div id="notice"></div>
+<div class="grid">
+  <div class="card"><div class="k">Room ID</div><div class="v" id="room_id">-</div></div>
+  <div class="card"><div class="k">Local time (Asia/Dhaka)</div><div class="v" id="time">-</div></div>
+  <div class="card"><div class="k">Temperature</div><div class="v"><span id="temp_c">-</span> &deg;C</div></div>
+  <div class="card"><div class="k">Humidity</div><div class="v"><span id="rh">-</span> %</div></div>
+  <div class="card"><div class="k">Status</div><div class="v" id="status">-</div></div>
+  <div class="card"><div class="k">Flame</div><div class="v" id="flame">-</div></div>
+  <div class="card"><div class="k">Door</div><div class="v" id="door">-</div></div>
+  <div class="card"><div class="k">Last card UID</div><div class="v" id="last_uid">-</div></div>
+  <div class="card"><div class="k">Wi-Fi signal (dBm)</div><div class="v" id="rssi">-</div></div>
+  <div class="card"><div class="k">Chip temperature (&deg;C)</div><div class="v" id="chip_temp_c">-</div></div>
+  <div class="card"><div class="k">Firmware</div><div class="v" id="fw">-</div></div>
+  <div class="card"><div class="k">Data quality</div><div class="v" id="quality">-</div></div>
+</div>
+<div class="grid" id="extras" style="margin-top:10px"></div>
+<div id="err"></div>
+<script>
+const ids=["room_id","time","temp_c","rh","status","last_uid","rssi","chip_temp_c","fw","quality","door"];
+async function tick(){
+  try{
+    const r=await fetch("/api/status",{cache:"no-store"});
+    const s=await r.json();
+    ids.forEach(i=>{const e=document.getElementById(i);if(e)e.textContent=(s[i]===null||s[i]===undefined)?"-":s[i];});
+    document.getElementById("flame").textContent=s.flame?"FLAME":"none";
+    const c=document.getElementById("conn");c.textContent=s.conn;c.className="pill "+s.conn;
+    // Extras added by later levels. "alert" is the red banner, "notice" is the amber line.
+    const al=document.getElementById("alert"),no=document.getElementById("notice");
+    al.style.display="none";no.style.display="none";
+    let cards="";
+    (s.extras||[]).forEach(x=>{
+      if(x.k==="alert"){al.textContent=x.v;al.style.display="block";}
+      else if(x.k==="notice"){no.textContent=x.v;no.style.display="block";}
+      else cards+='<div class="card"><div class="k">'+x.l+'</div><div class="v">'+x.v+'</div></div>';
+    });
+    document.getElementById("extras").innerHTML=cards;
+    document.getElementById("err").textContent="";
+  }catch(e){document.getElementById("err").textContent="Cannot reach the device";}
+}
+tick();setInterval(tick,1000);   // updates by itself every second (paper: at least every 2 s)
+</script>
+</body>
+</html>

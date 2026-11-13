@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartClass setup</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f4f6fb;color:#0f172a;margin:0;padding:16px;max-width:520px}
+  h1{font-size:20px}
+  label{display:block;margin-top:12px;font-size:13px;color:#475569}
+  input,select{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box}
+  button{margin-top:16px;padding:12px 18px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font-size:16px}
+  #msg{margin-top:12px;font-weight:bold}
+  .err{color:#b00020}.ok{color:#065f46}
+  .net{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<h1>SmartClass device setup</h1>
+<p id="ap"></p>
+<form id="f">
+  <label>Wi-Fi network (nearby, with signal strength)</label>
+  <select id="list"></select>
+  <label>or type the network name</label>
+  <input id="ssid" autocomplete="off">
+  <label>Wi-Fi password</label>
+  <input id="pass" type="password" autocomplete="off">
+  <label>Room ID</label>
+  <input id="room" autocomplete="off">
+  <label>Device token</label>
+  <input id="token" type="password" autocomplete="off">
+  <label>Platform address (https://...)</label>
+  <input id="server" autocomplete="off" placeholder="https://your-platform.example.com">
+  <button type="submit">Save and connect</button>
+</form>
+<div id="msg"></div>
+<script>
+const $=id=>document.getElementById(id);
+let list=[];
+async function scan(){
+  try{
+    const r=await fetch("/api/scan",{cache:"no-store"});
+    const l=await r.json();
+    if(JSON.stringify(l)!==JSON.stringify(list)){
+      list=l;
+      $("list").innerHTML='<option value="">-- choose --</option>'+l.sort((a,b)=>b.rssi-a.rssi)
+        .map(n=>'<option value="'+n.ssid.replace(/"/g,"&quot;")+'">'+n.ssid+'  ('+n.rssi+' dBm)</option>').join("");
+    }
+  }catch(e){}
+}
+$("list").onchange=()=>{ if($("list").value) $("ssid").value=$("list").value; };
+async function status(){
+  try{
+    const s=await (await fetch("/api/status",{cache:"no-store"})).json();
+    $("ap").textContent="Access point: "+s.ap_ssid;
+    if(s.mode==="SETUP" && s.setup_error){ $("msg").className="err"; $("msg").textContent="Error: "+s.setup_error; }
+    if(s.mode!=="SETUP" && s.conn){ $("msg").className="ok"; $("msg").textContent="Connected. Device address: http://"+s.ip+"  or  http://"+s.mdns; }
+  }catch(e){}
+}
+$("f").onsubmit=async ev=>{
+  ev.preventDefault();
+  $("msg").className="";$("msg").textContent="Saving...";
+  const body=new URLSearchParams({ssid:$("ssid").value,pass:$("pass").value,room:$("room").value,token:$("token").value,server:$("server").value});
+  const r=await fetch("/api/save",{method:"POST",body});
+  $("msg").textContent=r.ok?"Saved. Connecting (about 15 seconds)...":"Could not save: "+await r.text();
+};
+scan();status();setInterval(scan,5000);setInterval(status,2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "filename": "FastRobox.kicad_pro",
+    "version": 1
+  },
+  "board": {
+    "design_settings": {},
+    "layer_presets": [],
+    "viewports": []
+  },
+  "boards": [],
+  "libraries": {
+    "pinned_symbol_libs": [],
+    "pinned_footprint_libs": []
+  },
+  "schematic": {
+    "drawing": {},
+    "legacy_lib_dir": "",
+    "legacy_lib_list": []
+  },
+  "sheets": [],
+  "text_variables": {}
+}
