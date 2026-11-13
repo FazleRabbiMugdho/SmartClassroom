@@ -1,0 +1,157 @@
+openapi: 3.1.0
+info:
+  title: SmartClass Device API
+  version: 0.1.0
+  description: >
+    Hardware-to-cloud device API (Part C). Level 2 fixed snake_case field names
+    are preserved at the wire boundary. Idempotency key is (device_id, seq).
+servers:
+  - url: /api/device/v1
+security:
+  - deviceToken: []
+components:
+  securitySchemes:
+    deviceToken:
+      type: http
+      scheme: bearer
+      description: Per-device token (Part C2). Hashed verifier stored server-side.
+  schemas:
+    Telemetry:
+      type: object
+      required: [device_id, room_id, seq, ts, uptime_s, temp_c, rh, heat_index_c,
+                 flame, door, status, heat_trend, rssi, heap_kb, chip_temp_c, fw, quality]
+      additionalProperties: true
+      properties:
+        device_id: { type: string }
+        room_id: { type: string }
+        seq: { type: integer }
+        ts: { type: integer, description: unix seconds (device NTP) }
+        uptime_s: { type: integer }
+        temp_c: { type: number }
+        rh: { type: number }
+        heat_index_c: { type: number }
+        flame: { type: boolean }
+        door: { type: string, enum: [LOCKED, UNLOCKED] }
+        status: { type: string, enum: [SAFE, WARNING, DANGER, FIRE] }
+        heat_trend: { type: string, enum: [RISING, FALLING, STABLE] }
+        rssi: { type: integer }
+        heap_kb: { type: integer }
+        chip_temp_c: { type: number }
+        fw: { type: string }
+        quality: { type: string, enum: [good, bad] }
+    Event:
+      type: object
+      required: [device_id, room_id, seq, ts, type]
+      additionalProperties: true
+      properties:
+        device_id: { type: string }
+        room_id: { type: string }
+        seq: { type: integer }
+        ts: { type: integer }
+        type:
+          type: string
+          description: Device events only. Server-generated types are rejected here.
+          enum: [BOOT, STATUS, FIRE, FIRE_CLEARED, SILENCED, PANIC, CARD_TAP,
+                 ENTRY_GRANTED, ENTRY_DENIED, NO_FACE, OFFLINE_ENTRY, SENSOR_ERROR,
+                 SETTINGS_APPLIED, OTA_DONE, OTA_REJECTED, OTA_ROLLBACK]
+        detail: { type: object, additionalProperties: true }
+    IngestResult:
+      type: object
+      properties:
+        status: { type: string, enum: [accepted, duplicate, rejected] }
+        device_id: { type: string }
+        seq: { type: integer }
+        reason: { type: string }
+    Config:
+      type: object
+      required: [config_revision, warning_temp_c, danger_temp_c, telemetry_interval_s]
+      properties:
+        config_revision: { type: integer }
+        warning_temp_c: { type: number }
+        danger_temp_c: { type: number }
+        telemetry_interval_s: { type: integer }
+  responses:
+    Unauthorized:
+      description: Missing or invalid device token
+    Invalid:
+      description: Payload failed schema validation (422) or device_id mismatch (409)
+paths:
+  /telemetry:
+    post:
+      summary: Submit one telemetry sample
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/Telemetry" } } }
+      responses:
+        "200": { description: Result, content: { application/json: { schema: { $ref: "#/components/schemas/IngestResult" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/Invalid" }
+  /events:
+    post:
+      summary: Submit one immediate event
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/Event" } } }
+      responses:
+        "200": { description: Result, content: { application/json: { schema: { $ref: "#/components/schemas/IngestResult" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /sync:
+    post:
+      summary: Batch offline records oldest-first; per-record result returned
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_id, records]
+              properties:
+                device_id: { type: string }
+                records:
+                  type: array
+                  items:
+                    allOf:
+                      - type: object
+                        properties: { kind: { type: string, enum: [telemetry, event] } }
+      responses:
+        "200":
+          description: Per-record results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results: { type: array, items: { $ref: "#/components/schemas/IngestResult" } }
+  /config:
+    get:
+      summary: Fetch latest desired configuration
+      responses:
+        "200": { description: Config, content: { application/json: { schema: { $ref: "#/components/schemas/Config" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /commands/next:
+    get:
+      summary: Poll next pending command (none until Prompt 04)
+      responses:
+        "200": { description: Next command or null }
+  /commands/{commandId}/ack:
+    post:
+      summary: Acknowledge a command (RECEIVED/APPLIED/FAILED)
+      parameters:
+        - { name: commandId, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: Recorded } }
+  /face/verify:
+    post:
+      summary: Submit cropped face + card UID (crop not stored)
+      responses: { "200": { description: Verification result } }
+  /camera/analysis:
+    post:
+      summary: Submit transient frame analysis metadata (frames not stored)
+      responses: { "200": { description: Accepted } }
+  /csi/batch:
+    post:
+      summary: Submit CSI samples or features
+      responses: { "200": { description: Accepted } }
+  /health:
+    post:
+      summary: Submit health/task/core status
+      responses: { "200": { description: Accepted } }

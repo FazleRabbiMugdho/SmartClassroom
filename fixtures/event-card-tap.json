@@ -1,0 +1,8 @@
+{
+  "device_id": "T07-D1",
+  "room_id": "ROOM-101",
+  "seq": 1049,
+  "ts": 1794567891,
+  "type": "CARD_TAP",
+  "detail": { "uid": "04A1B2C3", "source": "RC522" }
+}
