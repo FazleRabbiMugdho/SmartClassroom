@@ -1,14 +1,15 @@
-// Level 2 — local web server: status page (served from LittleFS) and the setup page.
-// The page files live in firmware/data/ and are uploaded with `pio run -e esp32s3 -t uploadfs`.
+// Level 2 — local web server: status page and setup page.
+// The pages are built into the firmware (web_pages.h, generated from firmware/data/ by tools/embed_pages.py),
+// so no separate filesystem upload is needed.
 #include <Arduino.h>
 #include "core/tasks.h"
 #include <WiFi.h>
 #include <WebServer.h>
-#include <LittleFS.h>
 #include <esp_task_wdt.h>
 #include "core/shared.h"
 #include "core/extras.h"
 #include "levels/level02/l2.h"
+#include "levels/level02/web_pages.h"
 
 static WebServer server(80);
 static String g_scan_cache = "[]";
@@ -25,14 +26,9 @@ static String jsonEscape(const String &s) {
   return o;
 }
 
-static void sendFile(const char *path) {
-  File f = LittleFS.open(path, "r");
-  if (!f) {
-    server.send(404, "text/plain", "UI file missing. Run: pio run -e esp32s3 -t uploadfs");
-    return;
-  }
-  server.streamFile(f, "text/html");
-  f.close();
+static void sendPage(const char *html) {
+  server.sendHeader("Cache-Control", "no-store");
+  server.send_P(200, "text/html; charset=utf-8", html);
 }
 
 static void handleStatus() {
@@ -118,7 +114,7 @@ static void handleSave() {
 }
 
 static void handleRoot() {
-  sendFile(strcmp(l2NetMode(), "SETUP") == 0 ? "/setup.html" : "/index.html");
+  sendPage(strcmp(l2NetMode(), "SETUP") == 0 ? SETUP_HTML : INDEX_HTML);
 }
 
 static void webTask(void *) {
@@ -134,9 +130,8 @@ void l2WebStart() {
   if (WiFi.getMode() == WIFI_MODE_NULL) {
     WiFi.mode(WIFI_AP_STA);
   }
-  if (!LittleFS.begin(true)) Serial.println("[ERROR] LittleFS mount failed");
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/setup", HTTP_GET, []() { sendFile("/setup.html"); });
+  server.on("/setup", HTTP_GET, []() { sendPage(SETUP_HTML); });
   server.on("/api/status", HTTP_GET, handleStatus);
   server.on("/api/scan", HTTP_GET, handleScan);
   server.on("/api/save", HTTP_POST, handleSave);

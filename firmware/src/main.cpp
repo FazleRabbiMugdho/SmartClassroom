@@ -16,9 +16,10 @@
 #include "levels/level02.h"
 #include "levels/level03.h"
 
-// Level 1: Dual-Core Tasks, Health and Watchdog
+// Levels 1-2 enabled. Level 3 is built but switched off: add &LEVEL_03 to turn it on.
 static const LevelModule *const ENABLED_LEVELS[] = {
     &LEVEL_01,
+    &LEVEL_02,
 };
 
 void setup() {

@@ -19,10 +19,8 @@
 <h1>SmartClass device setup</h1>
 <p id="ap"></p>
 <form id="f">
-  <label>Wi-Fi network (nearby, with signal strength)</label>
-  <select id="list"></select>
-  <label>or type the network name</label>
-  <input id="ssid" autocomplete="off">
+  <label>Wi-Fi network name (type it exactly)</label>
+  <input id="ssid" autocomplete="off" placeholder="e.g. john cena">
   <label>Wi-Fi password</label>
   <input id="pass" type="password" autocomplete="off">
   <label>Room ID</label>
@@ -36,19 +34,6 @@
 <div id="msg"></div>
 <script>
 const $=id=>document.getElementById(id);
-let list=[];
-async function scan(){
-  try{
-    const r=await fetch("/api/scan",{cache:"no-store"});
-    const l=await r.json();
-    if(JSON.stringify(l)!==JSON.stringify(list)){
-      list=l;
-      $("list").innerHTML='<option value="">-- choose --</option>'+l.sort((a,b)=>b.rssi-a.rssi)
-        .map(n=>'<option value="'+n.ssid.replace(/"/g,"&quot;")+'">'+n.ssid+'  ('+n.rssi+' dBm)</option>').join("");
-    }
-  }catch(e){}
-}
-$("list").onchange=()=>{ if($("list").value) $("ssid").value=$("list").value; };
 async function status(){
   try{
     const s=await (await fetch("/api/status",{cache:"no-store"})).json();
@@ -64,7 +49,7 @@ $("f").onsubmit=async ev=>{
   const r=await fetch("/api/save",{method:"POST",body});
   $("msg").textContent=r.ok?"Saved. Connecting (about 15 seconds)...":"Could not save: "+await r.text();
 };
-scan();status();setInterval(scan,5000);setInterval(status,2000);
+status();setInterval(status,2000);
 </script>
 </body>
 </html>

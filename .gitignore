@@ -4,10 +4,15 @@ npm-debug.log*
 .next/
 out/
 build/
-.env
-.env.local
 *.tsbuildinfo
 next-env.d.ts
+
+# Environment
+.env
+*.env
+.env.*
+.env.local
+!.env.example
 
 # Python
 __pycache__/
